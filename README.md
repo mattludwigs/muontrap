@@ -1,5 +1,8 @@
 # MuonTrap
 
+[![CircleCI](https://circleci.com/gh/fhunleth/muontrap.svg?style=svg)](https://circleci.com/gh/fhunleth/muontrap)
+[![Hex version](https://img.shields.io/hexpm/v/muontrap.svg "Hex version")](https://hex.pm/packages/muontrap)
+
 --> _Under active development_ <--
 
 Keep programs, deamons, and applications launched from Erlang and Elixir
