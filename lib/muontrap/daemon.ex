@@ -24,7 +24,7 @@ defmodule MuonTrap.Daemon do
   defmodule State do
     @moduledoc false
 
-    defstruct [:command, :port, :group]
+    defstruct [:command, :port, :group, :log_output]
   end
 
   def child_spec(opts) do
@@ -71,6 +71,8 @@ defmodule MuonTrap.Daemon do
 
   def init([command, args, opts]) do
     group = Keyword.get(opts, :group)
+    logging = Keyword.get(opts, :log_output)
+    opts = Keyword.drop(opts, [:log_output])
 
     {muontrap_args, leftover_opts} = Options.to_args(opts)
     updated_args = muontrap_args ++ ["--", command] ++ args
@@ -78,7 +80,7 @@ defmodule MuonTrap.Daemon do
     port_options = [:exit_status, {:args, updated_args}, {:line, 256} | leftover_opts]
     port = Port.open({:spawn_executable, to_charlist(MuonTrap.muontrap_path())}, port_options)
 
-    {:ok, %State{command: command, port: port, group: group}}
+    {:ok, %State{command: command, port: port, group: group, log_output: logging}}
   end
 
   def handle_call({:cgget, controller, variable_name}, _from, state) do
@@ -96,8 +98,12 @@ defmodule MuonTrap.Daemon do
     {:reply, os_pid, state}
   end
 
-  def handle_info({port, {:data, {_, message}}}, %State{port: port} = state) do
-    Logger.log(:debug, "MuonTrap.Daemon(#{state.command}): #{message}")
+  def handle_info({port, {:data, {_, _}}}, %State{log_output: nil} = state) do
+    {:noreply, state}
+  end
+
+  def handle_info({port, {:data, {_, message}}}, %State{port: port, log_output: log_level} = state) do
+    Logger.log(log_level, "MuonTrap.Daemon(#{state.command}): #{message}")
     {:noreply, state}
   end
 
